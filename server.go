@@ -24,6 +24,7 @@ func setupRoutes(app *fiber.App) {
 	api := app.Group("/api")
 
 	routes.EventsRoute(api.Group("/events"))
+	routes.UsersRoute(api.Group("/users"))
 }
 
 func main() {
