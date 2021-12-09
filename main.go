@@ -21,7 +21,18 @@ func setupRoutes(app *fiber.App) {
 			"github_repo": "https://github.com/beeerlian/go-mongo",
 		})
 	})
-	app.Get("/register/", controllers.UserRegistration)
+	app.Post("/api/users/register/", controllers.UserRegistration)
+	app.Post("/api/users/login/email/", controllers.LoginWithEmail)
+	app.Delete("/api/users/:id", controllers.DeleteUser)
+	app.Get("/api/users/", controllers.GetAllUser)
+	app.Post("/api/users/participant/:eventId/:userId", controllers.JoinEvent)
+	app.Get("/api/users/:id", controllers.GetUser)
+
+	app.Get("/api/events/", controllers.GetAllEvents)
+	app.Get("/api/events/:id", controllers.GetEvent)
+	app.Post("/api/events/", controllers.AddEvent)
+	app.Put("/api/events/:id", controllers.UpdateEvent)
+	app.Delete("/api/events/:id", controllers.DeleteEvent)
 
 	api := app.Group("/api")
 
