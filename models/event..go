@@ -9,5 +9,5 @@ type Event struct {
 	Title       string             `json:"title,omitempty" bson:"title,omitempty"`
 	Link        string             `json:"link,omitempty" bson:"link,omitempty"`
 	Time        string             `json:"time,omitempty" bson:"time,omitempty"`
-	Participant []User             `json:"participant,omitempty" bson:"participant,omitempty"`
+	Participant []EventActivity    `json:"participant,omitempty" bson:"participant,omitempty"`
 }

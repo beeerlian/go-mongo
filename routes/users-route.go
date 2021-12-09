@@ -10,5 +10,6 @@ func UsersRoute(route fiber.Router) {
 	route.Post("/login/email/", controllers.LoginWithEmail)
 	route.Delete("/:id", controllers.DeleteUser)
 	route.Get("/", controllers.GetAllUser)
-	route.Post("/participant/:id", controllers.JoinEvent)
+	route.Post("/participant/:eventId/:userId", controllers.JoinEvent)
+	route.Get("/:id", controllers.GetUser)
 }

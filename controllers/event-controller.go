@@ -212,3 +212,132 @@ func DeleteEvent(c *fiber.Ctx) error {
 		"message": "Event deleted successfully",
 	})
 }
+
+func JoinEvent(c *fiber.Ctx) error {
+	eventCollection := config.MI.DB.Collection("events")
+	userCollection := config.MI.DB.Collection("users")
+
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+
+	var user models.User
+	var event models.Event
+	var userActivity models.UserActivity
+	var eventActivity models.EventActivity
+
+	eventObjId, err := primitive.ObjectIDFromHex(c.Params("eventId"))
+	userObjId, err := primitive.ObjectIDFromHex(c.Params("userId"))
+
+	findEventResult := eventCollection.FindOne(ctx, bson.M{"_id": eventObjId})
+	findUserResult := userCollection.FindOne(ctx, bson.M{"_id": userObjId})
+
+	err = findEventResult.Decode(&event)
+	if err != nil {
+		log.Println(err)
+		return c.Status(500).JSON(fiber.Map{
+			"success": false,
+			"message": "Failed to get Event by Id",
+			"error":   err,
+		})
+	}
+	err = findUserResult.Decode(&user)
+	if err != nil {
+		log.Println(err)
+		return c.Status(500).JSON(fiber.Map{
+			"success": false,
+			"message": "Failed to get User by Id",
+			"error":   err,
+		})
+	}
+	userActivity = models.UserActivity{EventId: event.ID, EventTitle: event.Title, Attende: "no"}
+	eventActivity = models.EventActivity{UserId: user.ID, Email: user.Email, Attende: "no"}
+
+	event.Participant = append(event.Participant, eventActivity)
+	user.Activities = append(user.Activities, userActivity)
+
+	updateEvent := bson.M{
+		"$set": event,
+	}
+
+	updateUser := bson.M{
+		"$set": user,
+	}
+
+	_, err = eventCollection.UpdateOne(ctx, bson.M{"_id": eventObjId}, updateEvent)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"success": false,
+			"message": "Failed to add participant",
+			"error":   err.Error(),
+		})
+	}
+
+	_, err = userCollection.UpdateOne(ctx, bson.M{"_id": userObjId}, updateUser)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"success": false,
+			"message": "Failed to add userActivity",
+			"error":   err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"success": true,
+		"message": "User joined successfully",
+	})
+}
+
+// func JoinEvent(c *fiber.Ctx) error {
+// 	eventCollection := config.MI.DB.Collection("events")
+// 	userCollection := config.MI.DB.Collection("events")
+// 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+
+// 	var participant models.User
+// 	var event models.Event
+// 	objId, err := primitive.ObjectIDFromHex(c.Params("event-id"))
+// 	findResult := eventCollection.FindOne(ctx, bson.M{"_id": objId})
+// 	err = findResult.Decode(&event)
+// 	if err := c.BodyParser(&participant); err != nil {
+// 		log.Println(err)
+// 		return c.Status(400).JSON(fiber.Map{
+// 			"success": false,
+// 			"message": "Failed to parse body",
+// 			"error":   err,
+// 		})
+// 	}
+// 	event.Participant = append(event.Participant, participant)
+// 	if err != nil {
+// 		return c.Status(500).JSON(fiber.Map{
+// 			"success": false,
+// 			"message": "Failed to get event ID",
+// 			"error":   err.Error(),
+// 		})
+// 	}
+// 	updateEvent := bson.M{
+// 		"$set": event,
+// 	}
+
+// 	_, err = eventCollection.UpdateOne(ctx, bson.M{"_id": objId}, updateEvent)
+// 	if err != nil {
+// 		return c.Status(500).JSON(fiber.Map{
+// 			"success": false,
+// 			"message": "Failed to add participant",
+// 			"error":   err.Error(),
+// 		})
+// 	}
+
+// 	updateUser := bson.M{
+// 		"$set": participant,
+// 	}
+// 	_, err = userCollection.UpdateOne(ctx, bson.M{"_id": objId}, updateUser)
+// 	if err != nil {
+// 		return c.Status(500).JSON(fiber.Map{
+// 			"success": false,
+// 			"message": "Failed to add participant",
+// 			"error":   err.Error(),
+// 		})
+// 	}
+// 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+// 		"success": true,
+// 		"message": "User joined successfully",
+// 	})
+// }

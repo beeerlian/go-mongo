@@ -16,7 +16,7 @@ import (
 )
 
 func GetAllUser(c *fiber.Ctx) error {
-	eventCollection := config.MI.DB.Collection("users")
+	userCollection := config.MI.DB.Collection("users")
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 
 	var users []models.User
@@ -51,12 +51,12 @@ func GetAllUser(c *fiber.Ctx) error {
 	limitVal, _ := strconv.Atoi(c.Query("limit", "10"))
 	var limit int64 = int64(limitVal)
 
-	total, _ := eventCollection.CountDocuments(ctx, filter)
+	total, _ := userCollection.CountDocuments(ctx, filter)
 
 	findOptions.SetSkip((int64(page) - 1) * limit)
 	findOptions.SetLimit(limit)
 
-	cursor, err := eventCollection.Find(ctx, filter, findOptions)
+	cursor, err := userCollection.Find(ctx, filter, findOptions)
 	defer cursor.Close(ctx)
 
 	if err != nil {
@@ -88,7 +88,7 @@ func GetAllUser(c *fiber.Ctx) error {
 }
 
 func UserRegistration(c *fiber.Ctx) error {
-	eventCollection := config.MI.DB.Collection("users")
+	userCollection := config.MI.DB.Collection("users")
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	user := new(models.User)
 
@@ -100,8 +100,14 @@ func UserRegistration(c *fiber.Ctx) error {
 			"error":   err,
 		})
 	}
-
-	result, err := eventCollection.InsertOne(ctx, user)
+	findResult := userCollection.FindOne(ctx, bson.M{"email": user.Email})
+	if err := findResult.Err(); err == nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"success": false,
+			"message": "Email already exist",
+		})
+	}
+	result, err := userCollection.InsertOne(ctx, user)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"success": false,
@@ -117,7 +123,7 @@ func UserRegistration(c *fiber.Ctx) error {
 }
 
 func LoginWithEmail(c *fiber.Ctx) error {
-	eventCollection := config.MI.DB.Collection("users")
+	userCollection := config.MI.DB.Collection("users")
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 
 	var userLoginData models.User
@@ -130,7 +136,7 @@ func LoginWithEmail(c *fiber.Ctx) error {
 			"error":   err,
 		})
 	}
-	findResult := eventCollection.FindOne(ctx, bson.M{"email": userLoginData.Email})
+	findResult := userCollection.FindOne(ctx, bson.M{"email": userLoginData.Email})
 	if err := findResult.Err(); err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"success": false,
@@ -160,7 +166,7 @@ func LoginWithEmail(c *fiber.Ctx) error {
 
 }
 func DeleteUser(c *fiber.Ctx) error {
-	eventCollection := config.MI.DB.Collection("users")
+	userCollection := config.MI.DB.Collection("users")
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 
 	objId, err := primitive.ObjectIDFromHex(c.Params("id"))
@@ -171,7 +177,7 @@ func DeleteUser(c *fiber.Ctx) error {
 			"error":   err,
 		})
 	}
-	_, err = eventCollection.DeleteOne(ctx, bson.M{"_id": objId})
+	_, err = userCollection.DeleteOne(ctx, bson.M{"_id": objId})
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"success": false,
@@ -185,44 +191,27 @@ func DeleteUser(c *fiber.Ctx) error {
 	})
 }
 
-func JoinEvent(c *fiber.Ctx) error {
-	eventCollection := config.MI.DB.Collection("events")
+func GetUser(c *fiber.Ctx) error {
+	userCollection := config.MI.DB.Collection("users")
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 
-	var participant models.User
-	var event models.Event
+	var user models.User
 	objId, err := primitive.ObjectIDFromHex(c.Params("id"))
-	findResult := eventCollection.FindOne(ctx, bson.M{"_id": objId})
-	err = findResult.Decode(&event)
-	if err := c.BodyParser(&participant); err != nil {
-		log.Println(err)
-		return c.Status(400).JSON(fiber.Map{
+	//---------------------------------------------------------------------
+	findResult := userCollection.FindOne(ctx, bson.M{"_id": objId})
+	//---------------------------------------------------------------------
+	log.Println(findResult)
+	err = findResult.Decode(&user)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"success": false,
-			"message": "Failed to parse body",
+			"message": "Failed Decode user search result",
 			"error":   err,
 		})
 	}
-	event.Participant = append(event.Participant, participant)
-	if err != nil {
-		return c.Status(500).JSON(fiber.Map{
-			"success": false,
-			"message": "Failed to get event ID",
-			"error":   err.Error(),
-		})
-	}
-	update := bson.M{
-		"$set": event,
-	}
-	_, err = eventCollection.UpdateOne(ctx, bson.M{"_id": objId}, update)
-	if err != nil {
-		return c.Status(500).JSON(fiber.Map{
-			"success": false,
-			"message": "Failed to add participant",
-			"error":   err.Error(),
-		})
-	}
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+	log.Println(user)
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"data":    user,
 		"success": true,
-		"message": "Participant updated successfully",
 	})
 }
