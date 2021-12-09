@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/beeerlian/go-mongo/config"
+	"github.com/beeerlian/go-mongo/controllers"
 	"github.com/beeerlian/go-mongo/routes"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -20,6 +21,7 @@ func setupRoutes(app *fiber.App) {
 			"github_repo": "https://github.com/beeerlian/go-mongo",
 		})
 	})
+	app.Get("/register/", controllers.UserRegistration)
 
 	api := app.Group("/api")
 
