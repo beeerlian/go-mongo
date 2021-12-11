@@ -70,6 +70,7 @@ func GetAllUser(c *fiber.Ctx) error {
 	for cursor.Next(ctx) {
 		var user models.User
 		cursor.Decode(&user)
+		user.Password = "you dont have access to see user's password"
 		users = append(users, user)
 	}
 
@@ -209,7 +210,7 @@ func GetUser(c *fiber.Ctx) error {
 			"error":   err,
 		})
 	}
-	log.Println(user)
+	user.Password = "you dont have access to see user's password"
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"data":    user,
 		"success": true,
