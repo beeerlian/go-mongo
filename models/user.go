@@ -10,5 +10,6 @@ type User struct {
 	Email      string             `json:"email,omitempty" bson:"email,omitempty"`
 	Phone      string             `json:"phone,omitempty" bson:"phone,omitempty"`
 	Password   string             `json:"password,omitempty" bson:"password,omitempty"`
-	Activities []UserActivity         `json:"activities,omitempty" bson:"activities,omitempty"`
+	Status     string             `json:"status,omitempty" bson:"status,omitempty"`
+	Activities []UserActivity     `json:"activities,omitempty" bson:"activities,omitempty"`
 }
