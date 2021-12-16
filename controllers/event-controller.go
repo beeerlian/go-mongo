@@ -135,8 +135,8 @@ func AddEvent(c *fiber.Ctx) error {
 		})
 	}
 
-	userObjId, err := primitive.ObjectIDFromHex(c.Params(event.Lecturer))
-	findUserResult := userCollection.FindOne(ctx, bson.M{"_id": event.Lecturer})
+	userObjId, err := primitive.ObjectIDFromHex(event.Lecturer)
+	findUserResult := userCollection.FindOne(ctx, bson.M{"_id": userObjId})
 
 	err = findUserResult.Decode(&user)
 	if err != nil {
