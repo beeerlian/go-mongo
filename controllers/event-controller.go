@@ -159,7 +159,10 @@ func AddEvent(c *fiber.Ctx) error {
 			"error":   err,
 		})
 	}
-	_, err = userCollection.UpdateOne(ctx, bson.M{"_id": userObjId}, user)
+	updateUser := bson.M{
+		"$set": user,
+	}
+	_, err = userCollection.UpdateOne(ctx, bson.M{"_id": userObjId}, updateUser)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"success": false,
