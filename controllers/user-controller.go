@@ -162,6 +162,7 @@ func LoginWithEmail(c *fiber.Ctx) error {
 	}
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"success": true,
+		"data":    findResult,
 		"message": "User Loged-in successfully",
 	})
 
