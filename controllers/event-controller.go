@@ -119,8 +119,12 @@ func GetEvent(c *fiber.Ctx) error {
 
 func AddEvent(c *fiber.Ctx) error {
 	eventCollection := config.MI.DB.Collection("events")
+	userCollection := config.MI.DB.Collection("users")
+
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	event := new(models.Event)
+
+	var user models.User
 
 	if err := c.BodyParser(event); err != nil {
 		log.Println(err)
@@ -131,12 +135,35 @@ func AddEvent(c *fiber.Ctx) error {
 		})
 	}
 
+	userObjId, err := primitive.ObjectIDFromHex(c.Params(event.Lecturer))
+	findUserResult := userCollection.FindOne(ctx, bson.M{"_id": userObjId})
+
+	err = findUserResult.Decode(&user)
+	if err != nil {
+		log.Println(err)
+		return c.Status(500).JSON(fiber.Map{
+			"success": false,
+			"message": "Failed to get User by Id",
+			"error":   err,
+		})
+	}
+
+	user.EventsCreated = append(user.EventsCreated, *event)
+
 	result, err := eventCollection.InsertOne(ctx, event)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"success": false,
 			"message": "Event failed to insert",
 			"error":   err,
+		})
+	}
+	_, err = userCollection.UpdateOne(ctx, bson.M{"_id": userObjId}, user)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"success": false,
+			"message": "Failed to add userActivity",
+			"error":   err.Error(),
 		})
 	}
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
