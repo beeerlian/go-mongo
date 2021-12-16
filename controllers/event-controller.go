@@ -143,6 +143,7 @@ func AddEvent(c *fiber.Ctx) error {
 		log.Println(err)
 		return c.Status(500).JSON(fiber.Map{
 			"success": false,
+			"id":      event.Lecturer,
 			"message": "Failed to get User by Id",
 			"error":   err,
 		})
